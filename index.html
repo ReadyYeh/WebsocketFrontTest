@@ -1,0 +1,126 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>SD串接API外出畫畫</title>
+
+    <script type="text/javascript">
+        function sendLoginInfo() {
+            var Password = document.getElementById("input_password").value;
+            var IP = document.getElementById("input_ip").value;
+            var Port = document.getElementById("input_port").value;
+            var Prompt = document.getElementById("input_prompt").value;
+            var Negative = document.getElementById("input_negative").value;
+            var Width = document.getElementById("input_width").value;
+            var Height = document.getElementById("input_height").value;
+            var CFG_Scale = document.getElementById("input_cfg_scale").value;
+            var Steps = document.getElementById("input_steps").value;
+
+            //var username = input_username.value;
+            //var password = input_password.value;
+            //var IP = Input_IP.value;
+            //var Port = Input_Port.value;
+
+            const JSONData =
+            {
+                password: Password,
+                prompt: Prompt,
+                negative: Negative,
+                width: Width,
+                height: Height,
+                cfg_scale: CFG_Scale,
+                steps: Steps
+            }
+            PassData = JSON.stringify(JSONData);
+            //var loginInfo = username + "*****" + password;
+            //var logInfo
+            // 打開連接
+            var ws = new WebSocket("ws://" + IP + ":" + Port);
+
+            // 傳送資料
+            ws.onopen = function () {
+                // 使用send()方法傳送資料
+                ws.send(PassData);
+                document.getElementById('btn_send').disabled = true;
+            };
+
+            // 接收資料
+            ws.onmessage = function (evt) {
+                var received_msg = evt.data;
+                const base64Images = JSON.parse(received_msg);
+
+                // 清空原本顯示的圖片
+                const oldImgs = document.querySelectorAll('img');
+
+                // 如果圖片節點存在，就從 body 節點中刪除它們
+                oldImgs.forEach(function(img) {
+                    document.body.removeChild(img);
+                });
+
+                for (let i = 0; i < base64Images.length; i++)
+                {
+                    // 將 Base64 字符串轉換為圖片
+                    const img = document.createElement('img');
+                    img.src = 'data:image/jpeg;base64,' + base64Images[i];
+
+                    // 將圖片顯示在網頁上
+                    document.body.appendChild(img);
+                }
+                // 作為一個好習慣，在接收完資料後就關閉連接，這樣可以減少伺服器的負擔
+                ws.close();
+                document.getElementById('btn_send').disabled = false;
+            };
+
+            // 關閉連接後的事件
+            ws.onclose = function () {
+            };
+            
+        }
+    </script>
+</head>
+<body>
+<div id="sse">
+    <table>
+        <tr>
+            <td>IP</td>
+            <td><input type="text" id="input_ip" style="width:200px"></td>
+            <td>Port</td>
+            <td><input type="text" id="input_port" style="width:200px"></td>
+            <td>密碼</td>
+            <td><input type="password" id="input_password" style="width:200px"></td>
+            <td><input id="btn_send" type="button" value="畫畫" onclick="sendLoginInfo()" style="width:270px;"></td>
+            
+        </tr>
+        <tr>
+            <td>prompt</td>
+            <td><textarea type="text" id="input_prompt" style="width:200px;height:500px;overflow-x: hidden;overflow-y: scroll;resize: none;"></textarea></td>
+            <td>negative</td>
+            <td><textarea type="text" id="input_negative" style="width:200px;height:500px;overflow-x: hidden;overflow-y: scroll;resize: none;"></textarea></td>            
+            <td colspan="2" style="vertical-align: top;">
+                <table>
+                  <tr>
+                    <td>width</td>
+                    <td><input type="number" min="512" max="2048" value="512" id="input_width" style="width:100px"></td>
+                  </tr>
+                  <tr><tr style="height:20px"></tr>
+                  <tr>
+                    <td>height</td>
+                    <td><input type="number" min="512" max="2048" value="512" id="input_height" style="width:100px"></td>
+                  </tr>
+                  <tr><tr style="height:20px"></tr>
+                  <tr>
+                    <td>cfg_scale</td>
+                    <td><input type="number" min="1" max="30" value="7" id="input_cfg_scale" style="width:100px"></td>
+                  </tr>
+                  <tr><tr style="height:20px"></tr>
+                  <tr>
+                    <td>steps</td>
+                    <td><input type="number" min="1" max="150" value="20" id="input_steps" style="width:100px"></td>
+                  </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>
